@@ -11,7 +11,7 @@ let failedRequestsQueue = [];
 export function setupAPIClient(ctx = undefined) {
   let cookies = parseCookies(ctx);
   const api = axios.create({
-    baseURL: 'https://qa-back.db2tech.com.br/',    
+    baseURL: 'https://sindona.api.db2tech.com.br/',    
     //baseURL: 'https://localhost:44397/',    
     headers: {      
       Authorization: `Bearer ${cookies['nextauth.token']}`,
