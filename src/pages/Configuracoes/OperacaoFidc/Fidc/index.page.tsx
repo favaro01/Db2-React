@@ -2,7 +2,7 @@ import { withSSRAuth } from "@/utils/withSSRAuth";
 import { Controller, useForm } from "react-hook-form"
 import { setupAPIClient } from "@/services/api";
 import Configuracoes from "../../index.page";
-import { ActionsHeader, Container, ContentModal, FooterModal, Header, HeaderModal, Label, Text, TitleBox, FidcUpdateOrCreate } from "./styles";
+import { ActionsHeader, Container, ContentModal, FooterModal, Header, HeaderModal, Label, Text, TitleBox, FidcUpdateOrCreate, SwitchLabel } from "./styles";
 import { styled, useTheme } from '@mui/material/styles';
 import { Table, Button, TableRow, TableHead, TableContainer, TableCell, TableBody, tableCellClasses, Box, IconButton, TableFooter, TablePagination, Modal, Typography, Menu, MenuItem, Input, FormControlLabel, Checkbox, Switch } from "@mui/material";
 import { ArrowLineLeft, ArrowLineRight, CaretLeft, CaretRight, Check, DotsThreeOutlineVertical, Minus, Rows, X, XCircle } from "phosphor-react";
@@ -14,6 +14,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { api } from "@/services/apiClient";
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { normalizeCurrency } from "@/Masks/mask";
+
+const label = { inputProps: { 'aria-label': 'Permitir valor de ultrapassagem ?' } };
 
 const StyledTableCell = styled(TableCell)(({ theme }) => ({
   [`&.${tableCellClasses.head}`]: {
@@ -55,7 +58,12 @@ const FidcFormSchema = z.object({
   planoFinanceiroJurosIdFormat: z.string(),
   planoFinanceiroTaxaIdFormat: z.string(),
   PlanoFinanceiroPrincipalIdFormat: z.string().min(1, { message: "Preencha o campo corretamente" }),
-
+  limitValue: z.string().min(1, { message: "Preencha o campo corretamente" }),
+  limitValueAcceptable: z.string().min(1, { message: "Preencha o campo corretamente" }),
+  permitirUltrapassagem: z.boolean(),
+  file: z.any().optional().refine(value => value instanceof FileList && value.length > 0 && value[0].type === 'application/pdf', {
+    message: 'Selecione um arquivo PDF',
+  }),
 });
 
 interface TablePaginationActionsProps {
@@ -141,6 +149,15 @@ type createDataProps = {
   planoFinanceiroJurosId: number,
   planoFinanceiroTaxaId: number,
   PlanoFinanceiroPrincipalId: number,
+  limitValue?: number,
+  canExceedLimit?: boolean,
+  maxExceededValue?: number,
+  fidcDocuments?: {
+    id?: number,
+    name?: string,
+    base64?: string,
+    type?: string
+  },
   jwt?: string,
   isDeleted: boolean,
   isActive: boolean
@@ -188,12 +205,30 @@ export default function Fidc() {
   const [nameModal, setNameModal] = useState('');
   const [changeTypeModal, setChangeTypeModal] = useState('');
   const [buttonRemoveFilters, setButtonRemoveFilters] = useState(false);
-
+  const [checked, setChecked] = useState(false);
+  const [base64, setBase64] = useState(null);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
-  const { register, handleSubmit, formState, reset, formState: { errors, isSubmitting, isSubmitSuccessful } } = useForm<FidcFormData>({
+  const { register, handleSubmit, formState, watch, control, setValue, reset, formState: { errors, isSubmitting, isSubmitSuccessful } } = useForm<FidcFormData>({
     resolver: zodResolver(FidcFormSchema)
   });
+
+  const limitWatchValue = watch("limitValue");
+  const limitWatchValueAcceptable = watch("limitValueAcceptable");
+
+  const handleFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+  
+      reader.onloadend = () => {    
+        setBase64(reader.result);
+        console.log(reader.result);
+      };
+  
+      reader.readAsDataURL(file);
+    }
+  };
 
   //Functions 
   const handleOpen = () => setOpen(true);
@@ -228,6 +263,12 @@ export default function Fidc() {
     setOpenIndex(index);
   }
 
+  const handleOvertakingPermission = (event) => {
+    const newChecked = event.target.checked;
+    setChecked(newChecked);
+    setValue('permitirUltrapassagem', newChecked);
+  };
+
   function handleOpenModalOrActivateAction(typeModal: 'view' | 'create' | 'update' | 'disable' | 'delete' | 'reactivate' | 'restore', row?: createDataProps) {
     setChangeTypeModal(typeModal);
     if (typeModal === 'create') {
@@ -236,11 +277,11 @@ export default function Fidc() {
     } else if (typeModal === 'view') {
       console.log(row.PlanoFinanceiroPrincipalId)
       setNameModal('Visualizar')
-      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
+      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, file: row?.fidcDocuments.base64, limitValue: String(row.limitValue), limitValueAcceptable: String(row.maxExceededValue) , permitirUltrapassagem: row.canExceedLimit ,credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
       setOpen(true);
     } else if (typeModal === 'update') {
       setNameModal('Editar')
-      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
+      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, file: row?.fidcDocuments.base64, limitValue: String(row.limitValue), limitValueAcceptable: String(row.maxExceededValue) , permitirUltrapassagem: row.canExceedLimit ,credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
       setOpen(true);
     } else if (typeModal === 'delete') {
       api.put(`/api/Fidc/UpdateFIDC/4`, {
@@ -253,6 +294,10 @@ export default function Fidc() {
         planoFinanceiroJurosId: row.planoFinanceiroJurosId,
         planoFinanceiroTaxaId: row.planoFinanceiroTaxaId,
         PlanoFinanceiroPrincipalId: row.PlanoFinanceiroPrincipalId,
+        limitValue: row.limitValue,
+        canExceedLimit: row.canExceedLimit,
+        maxExceededValue: row.maxExceededValue,
+        fidcDocuments: row?.fidcDocuments.base64,
         isDeleted: true,
         isActive: false,
       })
@@ -294,6 +339,10 @@ export default function Fidc() {
         planoFinanceiroTaxaId: row.planoFinanceiroTaxaId,
         PlanoFinanceiroPrincipalId: row.PlanoFinanceiroPrincipalId,
         contact: "",
+        limitValue: row.limitValue,
+        canExceedLimit: row.canExceedLimit,
+        maxExceededValue: row.maxExceededValue,
+        fidcDocuments: row?.fidcDocuments.base64,
         isDeleted: false,
         isActive: false,
       })
@@ -335,6 +384,10 @@ export default function Fidc() {
         planoFinanceiroJurosId: row.planoFinanceiroJurosId,
         planoFinanceiroTaxaId: row.planoFinanceiroTaxaId,
         PlanoFinanceiroPrincipalId: row.PlanoFinanceiroPrincipalId,
+        limitValue: row.limitValue,
+        canExceedLimit: row.canExceedLimit,
+        maxExceededValue: row.maxExceededValue,
+        fidcDocuments: row?.fidcDocuments.base64,
         contact: "",
         isDeleted: false,
         isActive: true,
@@ -372,7 +425,7 @@ export default function Fidc() {
   }
 
   async function handleActionFidc(data: FidcFormData) {
-    const { fidcId, name, cnpj, credorSiengeId, jwt, contact, planoFinanceiroJurosIdFormat, planoFinanceiroTaxaIdFormat, PlanoFinanceiroPrincipalIdFormat } = data;
+    const { fidcId, name, cnpj, credorSiengeId, jwt, contact, planoFinanceiroJurosIdFormat, planoFinanceiroTaxaIdFormat, PlanoFinanceiroPrincipalIdFormat, file, limitValue, limitValueAcceptable, permitirUltrapassagem } = data;
     if (changeTypeModal === 'create') {
       await api.post(`/api/Fidc/CreateFIDC`, {
         name,
@@ -382,6 +435,10 @@ export default function Fidc() {
         planoFinanceiroJurosId: Number(planoFinanceiroJurosIdFormat),
         planoFinanceiroTaxaId: Number(planoFinanceiroTaxaIdFormat),
         PlanoFinanceiroPrincipalId: Number(PlanoFinanceiroPrincipalIdFormat),
+        limitValue: limitValue,
+        canExceedLimit: permitirUltrapassagem,
+        maxExceededValue: limitValueAcceptable,
+        fidcDocuments: file,
         jwt: "",
         isDeleted: false,
         isActive: true,
@@ -423,6 +480,10 @@ export default function Fidc() {
         planoFinanceiroJurosId: Number(planoFinanceiroJurosIdFormat),
         planoFinanceiroTaxaId: Number(planoFinanceiroTaxaIdFormat),
         planoFinanceiroPrincipalId: Number(PlanoFinanceiroPrincipalIdFormat),
+        limitValue: limitValue,
+        canExceedLimit: permitirUltrapassagem,
+        maxExceededValue: limitValueAcceptable,
+        fidcDocuments: file,
         jwt: "",
         isActive: true,
         isDeleted: true
@@ -463,22 +524,11 @@ export default function Fidc() {
   async function fetchFidc() {
     await api.get(`/api/Fidc/GetAllFIDC`)
       .then(response => {
+        console.log(response.data)
         setRows(response.data);
       })
       .catch(() => {
-      })
-
-    const getSettings = [
-      { name: 'Visualizar', type: 'view', },
-      { name: 'Editar', type: 'update', },
-      { name: 'Desativar', type: 'disable', },
-      { name: 'Excluir', type: 'delete', },
-      { name: 'Adicionar', type: 'create', },
-      { name: 'Habilitar', type: 'reactivate', },
-      { name: 'Restaurar', type: 'restore', },
-    ]
-
-    setSettings(getSettings);
+      })    
   }
 
 
@@ -502,6 +552,17 @@ export default function Fidc() {
 
   useEffect(() => {
     fetchFidc();
+    const getSettings = [
+      { name: 'Visualizar', type: 'view', },
+      { name: 'Editar', type: 'update', },
+      { name: 'Desativar', type: 'disable', },
+      { name: 'Excluir', type: 'delete', },
+      { name: 'Adicionar', type: 'create', },
+      { name: 'Habilitar', type: 'reactivate', },
+      { name: 'Restaurar', type: 'restore', },
+    ]
+
+    setSettings(getSettings);
     fetchGetPlanoFinanceiro();
   }, [])
 
@@ -510,6 +571,15 @@ export default function Fidc() {
       resetInputs()
     }
   }, [formState, isSubmitSuccessful, reset])
+
+  useEffect(() => {
+    setValue("limitValue", normalizeCurrency(limitWatchValue))
+  },[limitWatchValue])
+
+
+  useEffect(() => {
+    setValue("limitValueAcceptable", normalizeCurrency(limitWatchValueAcceptable))
+  },[limitWatchValueAcceptable])
 
   return (
     <Configuracoes>
@@ -591,53 +661,53 @@ export default function Fidc() {
                       onClose={handleCloseFidcMenu}
                     >
                       {settings.map((setting) => {
-                        if (setting.type === 'create') {
-                          // Não renderizar "Adicionar" e "Buscar"
+                          if (setting.type === 'create' || setting.type === 'search') {
+                            // Não renderizar "Adicionar" e "Buscar"
+                            return null;
+                          }
+
+                          // Renderizar sempre os menus que não dependem do status
+                          if (setting.type === 'view') {
+                            return (
+                              <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting.type, row)}>
+                                <Typography textAlign="center">{setting.name}</Typography>
+                              </MenuItem>
+                            );
+                          }
+
+                          // Renderizar os menus com base no status
+                          if (row?.isActive && !row.isDeleted) {
+                            // Caso o status seja 1 (Ativado)
+                            if (setting.type === 'update' || setting.type === 'permission' || setting.type === 'disable' || setting.type === 'delete' || setting.type === 'resetPassword') {
+                              return (
+                                <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting.type, row)}>
+                                  <Typography textAlign="center">{setting.name}</Typography>
+                                </MenuItem>
+                              );
+                            }
+                          } else if (!row?.isActive && !row.isDeleted) {
+                            // Caso o status seja 2 (Desativado)
+                            if (setting.type === 'reactivate' || setting.type === 'delete') {
+                              return (
+                                <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting.type, row)}>
+                                  <Typography textAlign="center">{setting.name}</Typography>
+                                </MenuItem>
+                              );
+                            }
+                          } else if (!row?.isActive && row.isDeleted) {
+                            // Caso o status seja 3 (Excluído)
+                            if (setting.type === 'restore') {
+                              return (
+                                <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting.type, row)}>
+                                  <Typography textAlign="center">{setting.name}</Typography>
+                                </MenuItem>
+                              );
+                            }
+                          }
+
+                          // Renderizar null para outros tipos de menu não especificados acima
                           return null;
-                        }
-
-                        // Renderizar sempre os menus que não dependem do status
-                        if (setting.type === 'view') {
-                          return (
-                            <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting?.type, row)}>
-                              <Typography textAlign="center">{setting.name}</Typography>
-                            </MenuItem>
-                          );
-                        }
-
-                        // Renderizar os menus com base no status
-                        if (row?.isActive && !row.isDeleted) {
-                          // Caso o status seja 1 (Ativado)
-                          if (setting.type === 'update' || setting.type === 'disable' || setting.type === 'delete') {
-                            return (
-                              <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting?.type, row)}>
-                                <Typography textAlign="center">{setting.name}</Typography>
-                              </MenuItem>
-                            );
-                          }
-                        } else if (!row?.isActive && !row.isDeleted) {
-                          // Caso o status seja 2 (Desativado)
-                          if (setting.type === 'reactivate' || setting.type === 'delete') {
-                            return (
-                              <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting?.type, row)}>
-                                <Typography textAlign="center">{setting.name}</Typography>
-                              </MenuItem>
-                            );
-                          }
-                        } else if (!row?.isActive && row.isDeleted) {
-                          // Caso o status seja 3 (Excluído)
-                          if (setting.type === 'restore') {
-                            return (
-                              <MenuItem key={setting.type} onClick={() => handleOpenModalOrActivateAction(setting?.type, row)}>
-                                <Typography textAlign="center">{setting.name}</Typography>
-                              </MenuItem>
-                            );
-                          }
-                        }
-
-                        // Renderizar null para outros tipos de menu não especificados acima
-                        return null;
-                      })}
+                        })}
 
                     </Menu>
                   </TableCell>
@@ -765,6 +835,42 @@ export default function Fidc() {
                         {errors.planoFinanceiroJurosIdFormat && (
                           <span> {errors.planoFinanceiroJurosIdFormat.message} </span>
                         )}
+                      </Label>
+
+                      <Label size={"45"}>
+                        <Text>Valor Limite  <span style={{ color: "$red500" }}>*</span></Text>
+                        <input style={inputStyle} {...register("limitValue")} disabled={changeTypeModal === 'view' && true} />
+                        {errors.name && (
+                          <span>{errors.name.message} </span>
+                        )}
+                      </Label>
+
+                      <SwitchLabel size={"50"}>
+                        <Text>Permitir valor de ultrapassagem ?</Text>            
+                        <Switch {...register('permitirUltrapassagem')} checked={checked}  disabled={changeTypeModal === 'view' && true} onChange={handleOvertakingPermission} />
+                      </SwitchLabel>
+
+                      <Label size={"45"}>
+                        <Text>Valor aceitável para ultrapassagem  <span style={{ color: "$red500" }}>*</span></Text>
+                        <input style={inputStyle} {...register("limitValueAcceptable")} disabled={changeTypeModal === 'view' && true} />
+                        {errors.name && (
+                          <span>{errors.name.message} </span>
+                        )}
+                      </Label>
+
+                      <Label size={"45"}>
+                        <Text>Valor aceitável para ultrapassagem  <span style={{ color: "$red500" }}>*</span></Text>
+
+                        <Controller
+                          name="file"
+                          control={control}
+                          render={({ field: { onChange, onBlur, name, ref } }) => (
+                            <input type="file" onChange={(event) => {
+                              onChange(event.target.files);
+                              handleFileChange(event);
+                            }} onBlur={onBlur}  disabled={changeTypeModal === 'view' && true} name={name} ref={ref} accept=".pdf" />
+                          )}
+                        />
                       </Label>
 
                     </FidcUpdateOrCreate>

@@ -107,7 +107,7 @@ export const normalizeTelefoneFixo = (value: String | undefined) => {
       .replace(/(-\d{4})\d+?$/, '$1');
 }
 
-export const normalizeCurrency = (value: String | undefined) => {
+export const normalizeCurrency = (value: string | undefined) => {
   if (!value) return '';
 
   const numericValue = value.replace(/[^\d,]/g, '');
@@ -116,14 +116,12 @@ export const normalizeCurrency = (value: String | undefined) => {
 
   const parts = numericValue.split(',');
   const integerPart = parts[0].replace(/\D/g, '');
-  const decimalPart = parts[1] ? `,${parts[1].replace(/\D/g, '').slice(0, 2)}` : '';
+  const decimalPart = parts[1] ? parts[1].replace(/\D/g, '').slice(0, 2) : '';
 
   const formattedValue = Number(integerPart).toLocaleString('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
   });
 
-  return formattedValue.replace(/\s/g, '') + decimalPart;
+  return `R$ ${formattedValue},${decimalPart.padEnd(2, '0')}`;
 }
