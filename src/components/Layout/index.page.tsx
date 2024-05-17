@@ -39,7 +39,7 @@ import {
   ButtonHamburguerMobile,
 } from "./styles";
 import Menu from '@mui/material/Menu';
-import { Bell, CaretDown, Lock, Gear, House, Bank, ArrowsCounterClockwise, Money, SignOut, List } from "phosphor-react";
+import { Bell, CaretDown, Lock, Gear, House, Bank, ArrowsCounterClockwise, Money, SignOut, List, FileText  } from "phosphor-react";
 import { MenuItem, Typography } from "@mui/material";
 import Router from "next/router";
 import { AuthContext, signOut } from "@/contexts/AuthContext";
@@ -63,6 +63,13 @@ const barMenu = [
     "icon": <Gear size={20} />,
   },
   {
+    'TypeOptions': 1,
+    'NameTypeOptions': "Definições",
+    "NameMenu": "Relatórios" ,
+    "UrlPage": "Relatorios",
+    "icon": <FileText size={20} />,
+  },
+  {
     'TypeOptions': 2,
     'NameTypeOptions': "Setor integrado",
     "NameMenu": "Home" ,
@@ -83,13 +90,13 @@ const barMenu = [
     "UrlPage": "Pagamentos",
     "icon": <Money size={20} />
   },
-  {
-    'TypeOptions': 2,
-    'NameTypeOptions': "Setor integrado",
-    "NameMenu": "Conciliação" ,
-    "UrlPage": "Conciliacao",
-    "icon": <ArrowsCounterClockwise size={20} />
-  }
+  // {
+  //   'TypeOptions': 2,
+  //   'NameTypeOptions': "Setor integrado",
+  //   "NameMenu": "Conciliação" ,
+  //   "UrlPage": "Conciliacao",
+  //   "icon": <ArrowsCounterClockwise size={20} />
+  // }
 ]
 
 type LayoutProps = {
@@ -152,11 +159,13 @@ export default function Layout({children}:LayoutProps) {
   const [conciliationDelete, setConciliationDelete] = useState(false);
   const [conciliationReports, setConciliationReports] = useState(false);
 
+  const [reportsAdianta, setReportsAdianta] = useState(false);
+
   const handleCloseUserMenu = () => {
     setAnchorElUser(null);
   };
   const handleRedirectUser = () => {
-    Router.push('/GerenciarConta/Pessoal')
+    Router.push('/GerenciarConta')
     setAnchorElUser(null);
   };
 
@@ -247,7 +256,14 @@ export default function Layout({children}:LayoutProps) {
                   setSecurityReports(true);
                 }                                   
               })
-            }                   
+            }    
+            if(role.moduleId === 6){
+              role.permissions.map(permission => {
+                if(permission === 6){
+                  setReportsAdianta(true);
+                }                               
+              })              
+            }                
          })
       }
     }
@@ -280,7 +296,7 @@ export default function Layout({children}:LayoutProps) {
         <AsideContentOptions>        
           {
             
-            security === true || settingsPermission === true ?
+            security === true || settingsPermission === true  ?
               <>
                 <AsideContentTitle>
                   <AsideTitle>
@@ -291,7 +307,17 @@ export default function Layout({children}:LayoutProps) {
                   {barMenu.map(menu => {
                     return menu.TypeOptions === 1 &&
                       <Options key={menu.UrlPage}>
-                        <LinkOptions style={menu.UrlPage === 'Seguranca' ? (security === false ? {display: 'none'} : {}) : (settingsPermission === false ? {display: 'none'} : {})} onClick={() => Router.push(menu.UrlPage === 'Seguranca' ? "/"+menu.UrlPage+'/Departamentos' : "/"+menu.UrlPage)} className={pathnameActive === menu.UrlPage ? 'active' : ''}>
+                        <LinkOptions 
+                          style={
+                            menu.UrlPage === 'Seguranca' ? 
+                            (security === false ? {display: 'none'} : {}) :
+                            (menu.UrlPage === 'Configuracoes' ?
+                            (settingsPermission === false ? {display: 'none'} : {})
+                            : (reportsAdianta === false ? {display: 'none'} : {}))
+                            } 
+                          onClick={() => Router.push(menu.UrlPage === 'Seguranca' ? "/"+menu.UrlPage+'/Departamentos' : "/"+menu.UrlPage)} 
+                          className={pathnameActive === menu.UrlPage ? 'active' : ''}
+                        >
                           <ContentIconOption>
                             {menu.icon}
                           </ContentIconOption>

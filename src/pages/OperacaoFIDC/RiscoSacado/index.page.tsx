@@ -1755,7 +1755,7 @@ export default function Pagamentos(props: EnhancedTableProps) {
                                 <>
                                   <RiskWithdrawnExport>
                                     <Label size={"50"}>
-                                      <Text>Qual po Fidc que você quer enviar os títulos ?<span style={{ color: "$red500" }}>*</span></Text>
+                                      <Text>Qual o Fidc que você quer enviar os títulos ?<span style={{ color: "$red500" }}>*</span></Text>
 
                                       <select style={inputStyle} defaultValue={selectedFidc} onChange={(e) => setSelectedFidc(e.target.value)}>
                                         <option value="0" selected>Selecione o fidc</option>
