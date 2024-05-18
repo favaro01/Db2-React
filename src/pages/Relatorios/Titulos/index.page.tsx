@@ -91,12 +91,42 @@ export default function Titulos() {
 
     // Map the array to a new array with renamed and reordered keys
     const mappedJson = json.map(obj => ({      
-      'Nome': obj.fidcName,
-      'CNPJ': obj.cnpjFidc,
-      'Valor': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.contractValue),
-      'Valor de ultrapassagem': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.amountAllowedExceed),
-      'Saldo Pendente': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.outstandingBalance),
-      'Saldo Restante': new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.remainingBalance),      
+      'N.º do Título': obj.nuTitulo || '',
+      'Código de documento': obj.cdDocumento || '',
+      'N.º do documento': obj.nuDocumento || '',
+      'Data de Emissão': obj.dtEmissao ? new Date(obj.dtEmissao).toLocaleDateString('pt-BR') : '',
+      'Data de Vencimento': obj.dtVencimento ? new Date(obj.dtVencimento).toLocaleDateString('pt-BR') : '',
+      'Valor Líquido': obj.vlLiquido ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.vlLiquido) : '',
+      'Retenção': obj.retencao ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.retencao) : '',
+      'Baixa realizada': obj.baixa ? 'Sim' : 'Não',
+      'Status': obj.situation || '',
+      'Quantidade de parcelas': obj.quantidadeParcela || '',
+      'Conta Gerencial': obj.downloadAccounts || '',
+      'Observações': obj.obs || '',
+      'Id do Credor no Sienge': obj.credorSiengeId || '',
+      'Nome do Credor': obj.credorName || '',
+      'CNPJ do Credor': obj.credorCnpj || '',
+      'Id da Empresa no Sienge': obj.empresaSiengeId || '',
+      'Nome da Empresa': obj.empresaName || '',
+      'CNPJ da Empresa': obj.empresaCnpj || '',
+      'Contrapartida': '>',
+      'N.º do Título de contrapartida': obj.nuTituloNewFIDC || '',
+      'Código de documento de contrapartida': obj.cdDocumentoNewFIDC || '',      
+      'N.º do documento de contrapartida': obj.nuDocumentoNewFIDC || '',      
+      'Data de Emissão de contrapartida': obj.dtEmissaoNewFIDC ? new Date(obj.dtEmissaoNewFIDC).toLocaleDateString('pt-BR') : '',
+      'Data de Vencimento de contrapartida': obj.dtVencimentoNewFIDC ? new Date(obj.dtVencimentoNewFIDC).toLocaleDateString('pt-BR') : '',
+      'Valor Líquido de contrapartida': obj.vlLiquidoNewFIDC ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.vlLiquidoNewFIDC) : '',
+      'Taxas': obj.taxasNewFIDC || '',
+      'Juros': obj.jurosNewFIDC || '',
+      'Pagamento processado': obj.formaPagProcessadoNewFIDC !== null ? (obj.formaPagProcessadoNewFIDC ? 'Sim' : 'Não') : '',
+      'Status de contrapartida': obj.situationNewFIDC || '',
+      'Quantidade de parcelas ': obj.quantidadeParcelaNewFIDC || '',
+      'Conta Gerencial da contrapartida': obj.contasBaixadasNewFIDC || '',
+      'Taxa Efetiva': obj.taxaEfetivaNewFIDC || '',
+      'Desconto': obj.descontoNewFIDC || '',
+      'Valor Antecipado': obj.valorAntecipadoNewFIDC ? new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(obj.valorAntecipadoNewFIDC) : '',
+      'Previsão de pagamento': obj.previsaoPagamentoNewFIDC ? new Date(obj.previsaoPagamentoNewFIDC).toLocaleDateString('pt-BR') : '',
+      'Data de Antecipação': obj.dataAntecipacaoNewFIDC ? new Date(obj.dataAntecipacaoNewFIDC).toLocaleDateString('pt-BR') : '',
     }));
 
     // Convert the mapped array to a worksheet
@@ -109,7 +139,7 @@ export default function Titulos() {
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Sheet1');
 
     // Generate download
-    XLSX.writeFile(workbook, 'saldos.xlsx'); 
+    XLSX.writeFile(workbook, 'Titulos.xlsx'); 
   }  
 
   return (
