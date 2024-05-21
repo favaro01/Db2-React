@@ -60,7 +60,7 @@ const FidcFormSchema = z.object({
   PlanoFinanceiroPrincipalIdFormat: z.string().min(1, { message: "Preencha o campo corretamente" }),
   limitValue: z.string().min(1, { message: "Preencha o campo corretamente" }),
   limitValueAcceptable: z.string().min(1, { message: "Preencha o campo corretamente" }),
-  permitirUltrapassagem: z.boolean(),
+  permitirUltrapassagem: z.boolean().optional(),
   file: z.any().optional().refine(value => value instanceof FileList && value.length > 0 && value[0].type === 'application/pdf', {
     message: 'Selecione um arquivo PDF',
   }),
@@ -152,12 +152,10 @@ type createDataProps = {
   limitValue?: number,
   canExceedLimit?: boolean,
   maxExceededValue?: number,
-  fidcDocuments?: {
-    id?: number,
-    name?: string,
-    base64?: string,
-    type?: string
-  },
+  fidcDocuments?: [
+    string
+  ],
+  document?: string,
   jwt?: string,
   isDeleted: boolean,
   isActive: boolean
@@ -207,6 +205,7 @@ export default function Fidc() {
   const [buttonRemoveFilters, setButtonRemoveFilters] = useState(false);
   const [checked, setChecked] = useState(false);
   const [base64, setBase64] = useState(null);
+  const [receivedDocument, setReceivedDocument] = useState(null);
 
   const emptyRows = page > 0 ? Math.max(0, (1 + page) * rowsPerPage - rows.length) : 0;
   const { register, handleSubmit, formState, watch, control, setValue, reset, formState: { errors, isSubmitting, isSubmitSuccessful } } = useForm<FidcFormData>({
@@ -275,13 +274,15 @@ export default function Fidc() {
       setNameModal('Adicionar')
       setOpen(true);
     } else if (typeModal === 'view') {
-      console.log(row.PlanoFinanceiroPrincipalId)
+      console.log(row?.fidcDocuments)
       setNameModal('Visualizar')
-      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, file: row?.fidcDocuments.base64, limitValue: String(row.limitValue), limitValueAcceptable: String(row.maxExceededValue) , permitirUltrapassagem: row.canExceedLimit ,credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
+      setReceivedDocument(row?.document)
+      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, file: row?.fidcDocuments, limitValue: String(row.limitValue), limitValueAcceptable: String(row.maxExceededValue) , permitirUltrapassagem: row.canExceedLimit ,credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
       setOpen(true);
     } else if (typeModal === 'update') {
       setNameModal('Editar')
-      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, file: row?.fidcDocuments.base64, limitValue: String(row.limitValue), limitValueAcceptable: String(row.maxExceededValue) , permitirUltrapassagem: row.canExceedLimit ,credorSiengeId: row?.credorSiengeId, contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
+      setReceivedDocument(row?.document)
+      reset({ fidcId: row?.fidcId, name: row?.name, cnpj: row?.cnpj, file: row?.fidcDocuments, limitValue: String(row.limitValue), limitValueAcceptable: String(row.maxExceededValue) , permitirUltrapassagem: row.canExceedLimit ,credorSiengeId: String(row?.credorSiengeId), contact: row?.contact, planoFinanceiroJurosIdFormat: String(row?.planoFinanceiroJuros?.id <= 0 || row?.planoFinanceiroJuros?.id === null || isNaN(row?.planoFinanceiroJuros?.id) ? 0 : row?.planoFinanceiroJuros?.id), planoFinanceiroTaxaIdFormat: String(row?.planoFinanceiroTaxa?.id <= 0 || isNaN(row?.planoFinanceiroTaxa?.id) ? 0 : row?.planoFinanceiroTaxa?.id), PlanoFinanceiroPrincipalIdFormat: String(row?.planoFinanceiroPrincipal.id) });
       setOpen(true);
     } else if (typeModal === 'delete') {
       api.put(`/api/Fidc/UpdateFIDC/4`, {
@@ -297,7 +298,7 @@ export default function Fidc() {
         limitValue: row.limitValue,
         canExceedLimit: row.canExceedLimit,
         maxExceededValue: row.maxExceededValue,
-        fidcDocuments: row?.fidcDocuments.base64,
+        fidcDocuments: row?.fidcDocuments,
         isDeleted: true,
         isActive: false,
       })
@@ -342,7 +343,7 @@ export default function Fidc() {
         limitValue: row.limitValue,
         canExceedLimit: row.canExceedLimit,
         maxExceededValue: row.maxExceededValue,
-        fidcDocuments: row?.fidcDocuments.base64,
+        fidcDocuments: row?.fidcDocuments,
         isDeleted: false,
         isActive: false,
       })
@@ -387,7 +388,7 @@ export default function Fidc() {
         limitValue: row.limitValue,
         canExceedLimit: row.canExceedLimit,
         maxExceededValue: row.maxExceededValue,
-        fidcDocuments: row?.fidcDocuments.base64,
+        fidcDocuments: row?.fidcDocuments,
         contact: "",
         isDeleted: false,
         isActive: true,
@@ -426,23 +427,27 @@ export default function Fidc() {
 
   async function handleActionFidc(data: FidcFormData) {
     const { fidcId, name, cnpj, credorSiengeId, jwt, contact, planoFinanceiroJurosIdFormat, planoFinanceiroTaxaIdFormat, PlanoFinanceiroPrincipalIdFormat, file, limitValue, limitValueAcceptable, permitirUltrapassagem } = data;
+    let valueLimitedConverted = convertToNumber(limitValue);
+    let maxExceededValueConverted = convertToNumber(limitValueAcceptable);
+    var ObjectFidc = {name,
+      cnpj,
+      contact,
+      credorSiengeId,
+      planoFinanceiroJurosId: Number(planoFinanceiroJurosIdFormat),
+      planoFinanceiroTaxaId: Number(planoFinanceiroTaxaIdFormat),
+      PlanoFinanceiroPrincipalId: Number(PlanoFinanceiroPrincipalIdFormat),
+      limitValue: valueLimitedConverted,
+      canExceedLimit: permitirUltrapassagem,
+      maxExceededValue: maxExceededValueConverted,
+      fidcDocuments: [
+        base64,
+      ],
+      jwt: "",
+      isDeleted: false,
+      isActive: true,}
+      console.log(ObjectFidc)
     if (changeTypeModal === 'create') {
-      await api.post(`/api/Fidc/CreateFIDC`, {
-        name,
-        cnpj,
-        contact,
-        credorSiengeId,
-        planoFinanceiroJurosId: Number(planoFinanceiroJurosIdFormat),
-        planoFinanceiroTaxaId: Number(planoFinanceiroTaxaIdFormat),
-        PlanoFinanceiroPrincipalId: Number(PlanoFinanceiroPrincipalIdFormat),
-        limitValue: limitValue,
-        canExceedLimit: permitirUltrapassagem,
-        maxExceededValue: limitValueAcceptable,
-        fidcDocuments: file,
-        jwt: "",
-        isDeleted: false,
-        isActive: true,
-      })
+      await api.post(`/api/Fidc/CreateFIDC`, ObjectFidc)
         .then(() => {
           fetchFidc();
           toast.success(`Fidc ${name} adicionado com sucesso`, {
@@ -471,23 +476,7 @@ export default function Fidc() {
       handleClose();
     } else if (changeTypeModal === 'update') {
       console.log(fidcId, Number(credorSiengeId), cnpj, name, contact, planoFinanceiroJurosIdFormat, Number(planoFinanceiroTaxaIdFormat), Number(PlanoFinanceiroPrincipalIdFormat), jwt)
-      await api.put(`/api/Fidc/UpdateFIDC/1`, {
-        fidcId: fidcId,
-        credorSiengeId: Number(credorSiengeId),
-        cnpj,
-        name,
-        contact,
-        planoFinanceiroJurosId: Number(planoFinanceiroJurosIdFormat),
-        planoFinanceiroTaxaId: Number(planoFinanceiroTaxaIdFormat),
-        planoFinanceiroPrincipalId: Number(PlanoFinanceiroPrincipalIdFormat),
-        limitValue: limitValue,
-        canExceedLimit: permitirUltrapassagem,
-        maxExceededValue: limitValueAcceptable,
-        fidcDocuments: file,
-        jwt: "",
-        isActive: true,
-        isDeleted: true
-      })
+      await api.put(`/api/Fidc/UpdateFIDC/1`, ObjectFidc)
         .then(() => {
           fetchFidc();
           toast.success(`Fidc ${name} editado com sucesso.`, {
@@ -502,6 +491,7 @@ export default function Fidc() {
           });
         })
         .catch((err) => {
+          console.log(fidcId, Number(credorSiengeId), cnpj, name, contact, planoFinanceiroJurosIdFormat, Number(planoFinanceiroTaxaIdFormat), Number(PlanoFinanceiroPrincipalIdFormat), jwt)
           toast.error(`Não foi possÍvel editar fidc`, {
             position: "bottom-right",
             autoClose: 5000,
@@ -519,6 +509,7 @@ export default function Fidc() {
 
   function resetInputs() {
     reset({ fidcId: 0, name: '' });
+    setReceivedDocument(null);
   }
 
   async function fetchFidc() {
@@ -536,6 +527,26 @@ export default function Fidc() {
     setButtonRemoveFilters(false);
     fetchFidc();
   }
+
+  function handleDownload() {
+    const linkSource = receivedDocument;
+    const downloadLink = document.createElement('a');
+
+    downloadLink.href = linkSource;
+    downloadLink.download = 'documento.pdf';
+    downloadLink.click();
+  }
+
+  function convertToNumber(moneyString) {
+    // Remove 'R$', '.', e ',' da string
+    let numberString = moneyString.replace('R$', '').replace(/\./g, '').replace(',', '.');
+
+    // Converte a string para um número
+    let number = parseFloat(numberString);
+
+    return number;
+}
+
 
   async function fetchGetPlanoFinanceiro() {
     setLoadingAction(true);
@@ -859,7 +870,7 @@ export default function Fidc() {
                       </Label>
 
                       <Label size={"45"}>
-                        <Text>Valor aceitável para ultrapassagem  <span style={{ color: "$red500" }}>*</span></Text>
+                        <Text>Documento Anexo </Text>
 
                         <Controller
                           name="file"
@@ -872,6 +883,14 @@ export default function Fidc() {
                           )}
                         />
                       </Label>
+
+                      {changeTypeModal != 'create' &&
+                        receivedDocument &&
+                        !base64 && 
+                      <Label size={"45"}>
+                        <GradientButton type="button" title="Baixar anexo" onClick={() => handleDownload()} styleColors="db2Gradient" disabled={!(settings.some(setting => setting.type === 'update'))} size="auto" />
+
+                      </Label> }
 
                     </FidcUpdateOrCreate>
 
