@@ -12,7 +12,7 @@ import { CaretDown, CaretUp } from "phosphor-react";
 type SecurityProps = {
   children: React.ReactNode;
 }
-export default function Configuracoes({ children }: SecurityProps) {
+export default function Relatorios({ children }: SecurityProps) {
   const pathname = usePathname();
   const routeOpenPayments = pathname === "/Configuracoes/FormasPagamento/Credores" ? true : (pathname === "/Configuracoes/FormasPagamento/CodigosBanco" ? true : (pathname === "/Configuracoes/FormasPagamento/ConfiguracoesGerais" ? true : (pathname === "/Configuracoes/FormasPagamento/Documentos" ? true : (pathname === "/Configuracoes/FormasPagamento/NumerosFormasPagamentos" ? true : false))))
   const routeOpenFidc = pathname === "/Configuracoes/OperacaoFidc/Credores" ? true : (pathname === "/Configuracoes/OperacaoFidc/Documentos" ? true : (pathname === "/Configuracoes/OperacaoFidc/Empresas" ? true : false))
@@ -33,14 +33,9 @@ export default function Configuracoes({ children }: SecurityProps) {
     <Layout>
       <Container>
         <BoxMenu>
-          <MenuOptions>
-            <Options>
-              <LinkOptions onClick={() => Router.push('/Configuracoes/Empresas')}>
-                <span>Sincronizar cadastro de Empresas</span>
-              </LinkOptions>
-            </Options>
-            <Options>
-              <LinkOptions onClick={handleClick} className={pathname === '/Configuracoes' ? 'active' : ''}>
+          <MenuOptions>           
+            {/* <Options>
+              <LinkOptions onClick={handleClick} className={pathname === '/Relatorios' ? 'active' : ''}>
                 <span>Agiliza Pag</span> {open ? <CaretUp size={20} /> : <CaretDown size={20} />}
               </LinkOptions>
               <Collapse in={open} timeout="auto" unmountOnExit>
@@ -62,36 +57,18 @@ export default function Configuracoes({ children }: SecurityProps) {
                   </ListItemButton>
                 </List>
               </Collapse>
-            </Options>
+            </Options> */}
             <Options>
               <LinkOptions onClick={handleClickFidc} className={pathname === '/Configuracoes' ? 'active' : ''}>
                 <span>Adianta Cash</span> {openFidc ? <CaretUp size={20} /> : <CaretDown size={20} />}
               </LinkOptions>
               <Collapse in={openFidc} timeout="auto" unmountOnExit>
-                <List component="divx" disablePadding>
-                  <ListItemButton sx={{ pl: 6 }}>
-                    <ListItemText onClick={() => Router.push('/Configuracoes/OperacaoFidc/ConfiguracoesGerais')} primary="Configurações gerais" />
+                <List component="divx" disablePadding>                
+                  <ListItemButton onClick={() => Router.push('/Relatorios/Saldo')} sx={{ pl: 6 }}>
+                    <ListItemText primary="Saldo" />
                   </ListItemButton>
-                  <ListItemButton sx={{ pl: 6 }}>
-                    <ListItemText onClick={() => Router.push('/Configuracoes/OperacaoFidc/Credores')} primary="Credores Permitidos" />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => Router.push('/Configuracoes/OperacaoFidc/Documentos')} sx={{ pl: 6 }}>
-                    <ListItemText primary="Tipos de documentos permitidos" />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => Router.push('/Configuracoes/OperacaoFidc/PlanoFinanceiro')} sx={{ pl: 6 }}>
-                    <ListItemText primary="Plano Financeiro Contra Partida" />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => Router.push('/Configuracoes/OperacaoFidc/Fidc')} sx={{ pl: 6 }}>
-                    <ListItemText primary="Fidc" />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => Router.push('/Configuracoes/OperacaoFidc/ContaGerencial')} sx={{ pl: 6 }}>
-                    <ListItemText primary="Conta Gerencial" />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => Router.push('/Configuracoes/OperacaoFidc/CentroDeCusto')} sx={{ pl: 6 }}>
-                    <ListItemText primary="Centro de Custo" />
-                  </ListItemButton>
-                  <ListItemButton onClick={() => Router.push('/Configuracoes/OperacaoFidc/Empresas')} sx={{ pl: 6 }}>
-                    <ListItemText primary="Empresa" />
+                  <ListItemButton onClick={() => Router.push('/Relatorios/Titulos')} sx={{ pl: 6 }}>
+                    <ListItemText primary="Titulos" />
                   </ListItemButton>
                   {/* <ListItemButton onClick={() => Router.push('/Configuracoes/FormasPagamento/Documentos')} sx={{ pl: 6 }}>                   
                     <ListItemText primary="Tipos de documentos" />
