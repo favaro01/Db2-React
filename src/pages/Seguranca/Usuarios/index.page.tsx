@@ -5,7 +5,7 @@ import Seguranca from "../index.page";
 import { ActionsHeader, Container, ContentModal, FooterModal, Header, HeaderModal, Label, LoadingScreen, Text, TitleBox, TitlePermission, UserHasPermission, UserHasPermissionLeft, UserHasPermissionRight, UserSearch, UserUpdateOrCreate } from "./styles";
 import { styled, useTheme } from '@mui/material/styles';
 import { Table, Button, TableRow, TableHead, TableContainer, TableCell, TableBody, tableCellClasses, Box, IconButton, TableFooter, TablePagination, Modal, Typography, Menu, MenuItem, Input, FormControlLabel, Checkbox, Switch, CircularProgress } from "@mui/material";
-import { ArrowLineLeft, ArrowLineRight, ArrowsCounterClockwise, Bank, CaretLeft, CaretRight, Check, DotsThreeOutlineVertical, Gear, Lock, Minus, Money, X, XCircle } from "phosphor-react";
+import { ArrowLineLeft, ArrowLineRight, ArrowsCounterClockwise, Bank, CaretLeft, CaretRight, Check, DotsThreeOutlineVertical, FileText, Gear, Lock, Minus, Money, X, XCircle } from "phosphor-react";
 import { useContext, useEffect, useRef, useState } from "react";
 import { GradientButton } from "@/components/GradientButton";
 import { SimpleButton } from "@/components/SimpleButton";
@@ -243,6 +243,8 @@ export default function Usuarios() {
   const [conciliationEdit, setConciliationEdit] = useState(false);
   const [conciliationDelete, setConciliationDelete] = useState(false);
   const [conciliationReports, setConciliationReports] = useState(false);
+
+  const [reportsAdianta, setReportsAdianta] = useState(false);
 
   const [buttonRemoveFilters, setButtonRemoveFilters] = useState(false);
   const [searchName, setSearchName] = useState("");
@@ -561,6 +563,8 @@ export default function Usuarios() {
    setConciliationEdit(false);
    setConciliationDelete(false);
    setConciliationReports(false);
+
+    setReportsAdianta(false);
   }
 
   async function handleActionUser(data:UserFormData) {
@@ -660,6 +664,7 @@ export default function Usuarios() {
     var hasSeguranca = undefined;
     var hasConfiguracoes = undefined;
     var hasConciliacao = undefined;
+    var hasReports = undefined;
     setLoadingAction(true);
 
     if(paymentsView || paymentsAdd || paymentsEdit || paymentsDelete || paymentsReports){
@@ -727,6 +732,15 @@ export default function Usuarios() {
       }
     }  
 
+    if(reportsAdianta){
+      var hasReports = {
+        "moduleId": 6,
+        "permissions": [
+          reportsAdianta ? 6 : undefined,        
+        ].filter(permission => permission !== undefined)
+      }
+    }  
+
     const permissionUser = {
       "userId": userGet.userId, 
       "modules": [
@@ -734,7 +748,8 @@ export default function Usuarios() {
         hasFormasPagamento,
         hasSeguranca,
         hasConfiguracoes,
-        hasConciliacao
+        hasConciliacao,
+        hasReports
       ].filter(module => module !== undefined)
     }    
     permissionUser.modules.map(teste => {
@@ -908,6 +923,12 @@ export default function Usuarios() {
                 setSecurityReports(true);
               }                                   
             })
+          }else if(role.moduleId === 6){
+            role.permissions.map(permission => {
+              if(permission === 6){
+                setReportsAdianta(true);
+              }                                   
+            })
           }
         }
       )    
@@ -1045,6 +1066,16 @@ export default function Usuarios() {
         setConciliationDelete(!conciliationDelete)
       }else{
         setConciliationReports(!conciliationReports)
+      }
+    }else if(namePermission === 'relatorios'){
+      if(parentName === 'parent'){
+        if(reportsAdianta){
+          setReportsAdianta(!reportsAdianta)        
+        }else{
+          setReportsAdianta(true)
+        }
+      }else if(index === 6){
+        setReportsAdianta(!reportsAdianta)  
       }
     }else if(namePermission === 'UserGroups'){
       if(index === 0){
@@ -1330,14 +1361,14 @@ export default function Usuarios() {
                           <UserHasPermissionRight>                          
                             <TitlePermission>
                               <Money size={20} />
-                              <h1>Formas de pagamento</h1>
+                              <h1>Agiliza Pag</h1>
                             </TitlePermission>
                             <FormControlLabel
                                 sx={{ml: 1 }}
                                 label="Selecionar todos"
                                 control={
                                   <Checkbox
-                                    checked={paymentsView && paymentsAdd && paymentsEdit && paymentsDelete && paymentsReports}                              
+                                    checked={paymentsView && paymentsAdd && paymentsEdit && paymentsDelete}                              
                                     onChange={(e) => handleHasPermission('formasPagamento', 'parent', 0, e)}
                                   />
                                 }
@@ -1359,21 +1390,21 @@ export default function Usuarios() {
                                 label="Deletar"
                                 control={<Checkbox checked={paymentsDelete} onChange={(e) => handleHasPermission('formasPagamento', 'child', 3, e)} />}
                               />
-                              <FormControlLabel
+                              {/* <FormControlLabel
                                 label="Relatórios"
                                 control={<Checkbox checked={paymentsReports} onChange={(e) => handleHasPermission('formasPagamento', 'child', 4, e)} />}
-                              />
+                              /> */}
                             </Box>                          
                             <TitlePermission>
                               <Bank size={20} /> 
-                              <h1>Operação FIDC</h1>
+                              <h1>Adianta Cash</h1>
                             </TitlePermission>
                             <FormControlLabel
                                 sx={{ml: 1 }}
                                 label="Selecionar todos"
                                 control={
                                   <Checkbox
-                                    checked={opFidcView && opFidcAdd && opFidcEdit && opFidcDelete && opFidcReports}                              
+                                    checked={opFidcView && opFidcAdd && opFidcEdit && opFidcDelete}                              
                                     onChange={(e) => handleHasPermission('operacaoFidc', 'parent', 0, e)}
                                   />
                                 }
@@ -1395,12 +1426,12 @@ export default function Usuarios() {
                                 label="Deletar"
                                 control={<Checkbox checked={opFidcDelete} onChange={(e) => handleHasPermission('operacaoFidc', 'child', 3, e)} />}
                               />
-                              <FormControlLabel
+                              {/* <FormControlLabel
                                 label="Relatórios"
                                 control={<Checkbox checked={opFidcReports} onChange={(e) => handleHasPermission('operacaoFidc', 'child', 4, e)} />}
-                              />
+                              /> */}
                             </Box> 
-                            <TitlePermission>
+                            {/* <TitlePermission>
                               <ArrowsCounterClockwise size={20} />
                               <h1>Conciliação</h1>
                             </TitlePermission>
@@ -1435,7 +1466,7 @@ export default function Usuarios() {
                                 label="Relatórios"
                                 control={<Checkbox checked={conciliationReports} onChange={(e) => handleHasPermission('conciliacao', 'child', 4, e)} />}
                               />
-                            </Box> 
+                            </Box>  */}
                           </UserHasPermissionRight>
                           <UserHasPermissionLeft>
                             {/* <TitlePermission>                            
@@ -1455,7 +1486,7 @@ export default function Usuarios() {
                                 label="Selecionar todos"
                                 control={
                                   <Checkbox
-                                    checked={securityView && securityAdd && securityEdit && securityDelete && securityReports}                              
+                                    checked={securityView && securityAdd && securityEdit && securityDelete}                              
                                     onChange={(e) => handleHasPermission('seguranca', 'parent', 0, e)}
                                   />
                                 }
@@ -1477,10 +1508,10 @@ export default function Usuarios() {
                                 label="Deletar"
                                 control={<Checkbox checked={securityDelete} onChange={(e) => handleHasPermission('seguranca', 'child', 3, e)} />}
                               />
-                              <FormControlLabel
+                              {/* <FormControlLabel
                                 label="Relatórios"
                                 control={<Checkbox checked={securityReports} onChange={(e) => handleHasPermission('seguranca', 'child', 4, e)} />}
-                              />
+                              /> */}
                             </Box>                          
                             <TitlePermission>
                               <Gear size={20} />
@@ -1491,7 +1522,7 @@ export default function Usuarios() {
                                 label="Selecionar todos"
                                 control={
                                   <Checkbox
-                                    checked={settingsView && settingsAdd && settingsEdit && settingsDelete && settingsReports}                              
+                                    checked={settingsView && settingsAdd && settingsEdit && settingsDelete}                              
                                     onChange={(e) => handleHasPermission('configuracoes', 'parent', 0, e)}
                                   />
                                 }
@@ -1513,10 +1544,31 @@ export default function Usuarios() {
                                 label="Deletar"
                                 control={<Checkbox checked={settingsDelete} onChange={(e) => handleHasPermission('configuracoes', 'child', 3, e)} />}
                               />
-                              <FormControlLabel
+                              {/* <FormControlLabel
                                 label="Relatórios"
                                 control={<Checkbox checked={settingsReports} onChange={(e) => handleHasPermission('configuracoes', 'child', 4, e)} />}
+                              /> */}
+                            </Box>
+
+                            <TitlePermission>
+                              <FileText size={20} />
+                              <h1>Relatórios</h1>
+                            </TitlePermission>
+                            <FormControlLabel
+                                sx={{ml: 1 }}
+                                label="Selecionar todos"
+                                control={
+                                  <Checkbox
+                                    checked={reportsAdianta}                              
+                                    onChange={(e) => handleHasPermission('relatorios', 'parent', 0, e)}
+                                  />
+                                }
                               />
+                            <Box sx={{ display: "flex", flexDirection: "column", ml: 6 }}>
+                              <FormControlLabel
+                                label="Adianta Cash"
+                                control={<Checkbox checked={reportsAdianta} onChange={(e) => handleHasPermission('relatorios', 'child', 6, e)} />}
+                              />                             
                             </Box>
                           </UserHasPermissionLeft>
                         </UserHasPermission>
