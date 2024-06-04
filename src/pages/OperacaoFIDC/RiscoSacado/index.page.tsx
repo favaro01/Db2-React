@@ -930,9 +930,9 @@ export default function Pagamentos(props: EnhancedTableProps) {
 
           const treatedData = response.data.map((item) => ({
             "razao-sacado": item.empresa,
-            "cnpj-sacado": item.cnpj,
+            "cnpj-sacado": item.cnpj.replace(/[.-\/]/g, ''),
             "razao-fornecedor": item.fornecedor,
-            "cnpj-fornecedor": item.fornecedorCNPJ,
+            "cnpj-fornecedor": item.fornecedorCNPJ.replace(/[.-\/]/g, ''),
             "nota": item.nuDocumento,
             "valor": item.vlLiquido,
             "data-emissao": format(new Date(item.dtEmissao), 'dd/MM/yyyy'),
