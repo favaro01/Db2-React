@@ -929,17 +929,14 @@ export default function Pagamentos(props: EnhancedTableProps) {
           setExportFile(response.data);      
 
           const treatedData = response.data.map((item) => ({
-            "Código Erp": item.codERP,
-            "Documento": item.nuDocumento,
-            "Empresa": item.empresa,
-            "CNPJ empresa": item.cnpj,
-            "Data de Emissão": format(new Date(item.dtEmissao), 'dd/MM/yyyy'),
-            "Valor Liquido": item.vlLiquido,
-            "Imposto": item.retencao,
-            "Parcela": item.quantidadeParcela,
-            "Data Vencimento": format(new Date(item.dtVencimento), 'dd/MM/yyyy'),
-            "Fornecedor": item.fornecedor,
-            "Fornecedor CNPJ": item.fornecedorCNPJ
+            "razao-sacado": item.empresa,
+            "cnpj-sacado": item.cnpj,
+            "razao-fornecedor": item.fornecedor,
+            "cnpj-fornecedor": item.fornecedorCNPJ,
+            "nota": item.nuDocumento,
+            "valor": item.vlLiquido,
+            "data-emissao": format(new Date(item.dtEmissao), 'dd/MM/yyyy'),
+            "data-vencimento": format(new Date(item.dtVencimento), 'dd/MM/yyyy'),                        
           }));          
 
           const ws = XLSX.utils.json_to_sheet(treatedData);
