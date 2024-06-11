@@ -497,28 +497,31 @@ export default function Pagamentos(props: EnhancedTableProps) {
   
           // Verificar se o cabeçalho é compatível
           const expectedHeader = [
-            'fornecedor',
-            'fornecedor cnpj',
-            'fidc',
-            'fidc cnpj',
-            'n documento',
-            'id do erp',
-            'data de antecipação',
-            'previsão de pagamento',
-            'vencimento original',
-            'taxa efetiva',
-            'valor original',
-            'desconto',
-            'valor antecipado',
-            'juros',
-            'taxa',
             'status',
-            'obs'
+            'número',
+            'valor',
+            'data solicitação',
+            'cnpj fornecedor',
+            'nome fornecedor',
+            'cnpj sacado',
+            'nome sacado', 
+            'cnpj agente financeiro',
+            'nome agente financeiro',
+            'data aceite proposta',
+            'taxa operação',
+            'valor do desembolso da antecipação',
+            'status ativo',
+            'número nf',
+            'data vencimento fatura', 
+            'data emissão fatura',
+            'valor bruto fatura',
+            'data antecipação/reprova da fatura',
+            'observação',            
           ];
   
           const isHeaderCompatible = expectedHeader.every(header => originalHeader?.includes(header));
   
-          if (!isHeaderCompatible) {          
+          if (!isHeaderCompatible) {       
             errors.push({ message: `O cabeçalho do arquivo não é compatível com o esperado.` });          
             setErrorExcel(errors);          
           }else{
@@ -540,45 +543,97 @@ export default function Pagamentos(props: EnhancedTableProps) {
                 .replace(/[^a-zA-Z0-9]+(.)/g, (_, char) => char.toUpperCase()); // converter para camelCase
             };
 
+            const keyMapping = {
+              "Valor": "valorOriginal",
+              "Data Solicitação": "requestDate",
+              "CNPJ Fornecedor": "fornecedorCnpj",
+              "Nome Fornecedor": "fornecedor",
+              "CNPJ Agente Financeiro": "fidcCnpj",
+              "Nome Agente Financeiro": "fidc",
+              "Data Aceite Proposta": "proposalAcceptanceDate",
+              "Taxa Operação": "taxaEfetiva",
+              "Valor do Desembolso da Antecipação": "disbursementAmount",
+              "Número NF": "nDocumento",
+              "Data Antecipação/Reprova da Fatura": "dataDeAntecipacao",
+              "Data Vencimento Fatura": "vencimentoOriginal",
+              "Valor Bruto Fatura": "valorOriginal",
+              "Observação": "obs"
+            };
+
             // Mapear cada subarray para um objeto com chaves em camelCase
             const jsonData = filteredData.map((row, rowIndex) => {
               const obj = {};
               let allColumnsHaveValue = true;
 
               originalHeader?.forEach((key, index) => {
-                const camelCaseKey = toCamelCase(key);
                 let value = row[index];
+                if (key === "status") {
+                  originalHeader[index] = key;
+                } else if (key === "número") {
+                  // Remove the key from the JSON object
+                  return;
+                } else if (key === "valor") {
+                  originalHeader[index] = "valorOriginal";
+                  console.log(originalHeader[index])
+                } else if (key === "data solicitação") {
+                  originalHeader[index] = "requestDate";
+                } else if (key === "cnpj fornecedor") {
+                  originalHeader[index] = "fornecedorCnpj";
+                } else if (key === "nome fornecedor") {
+                  originalHeader[index] = "fornecedor";
+                } else if (key === "cnpj sacado" || key === "nome sacado" || key === "status ativo" || key === "data emissão fatura") {
+                  // Remove the key from the JSON object
+                  return;
+                } else if (key === "cnpj agente financeiro") {
+                  originalHeader[index] = "fidcCnpj";
+                } else if (key === "nome agente financeiro") {
+                  originalHeader[index] = "fidc";
+                } else if (key === "data aceite proposta") {
+                  originalHeader[index] = "proposalAcceptanceDate";
+                } else if (key === "taxa operação") {
+                  originalHeader[index] = "taxaEfetiva";
+                } else if (key === "valor do desembolso da antecipação") {
+                  originalHeader[index] = "disbursementAmount";
+                } else if (key === "número nf") {
+                  originalHeader[index] = "nDocumento";
+                } else if (key === "data antecipação/reprova da fatura") {
+                  originalHeader[index] = "dataDeAntecipacao";
+                } else if (key === "data vencimento fatura") {
+                  originalHeader[index] = "vencimentoOriginal";
+                } else if (key === "valor bruto fatura") {
+                  originalHeader[index] = "valorOriginal";
+                } else if (key === "observação") {
+                  originalHeader[index] = "obs";
+                }
 
                 // Verificar se a coluna tem valor
-                if (value === '' || value === null || value === undefined) {
+                if (value === "" || value === null || value === undefined) {
                   allColumnsHaveValue = false;
-                  // Adicionar informação de erro                  
-                  errors.push({ message: `Dado ausente na coluna ${camelCaseKey} na linha ${rowIndex + 1}` });
+                  // Adicionar informação de erro
+                  errors.push({ message: `Dado ausente na linha ${rowIndex + 1}` });
                 } else {
                   // Converter campos específicos para número
-                  if (['idDoErp', 'valorOriginal', 'desconto', 'valorAntecipado', 'juros', 'taxa', 'status'].includes(camelCaseKey)) {
-                   // Converte value para string e remove 'R$', 'r$', espaços e substitui vírgula por ponto
-                   const sanitizedValue = value.toString().replace(/R\$|r\$|\s/g, '').replace(/\.(?!\d)/g, '').replace(',', '.');
-                   value = Number(sanitizedValue);
+                  if (["idDoErp", "valorOriginal", "desconto", "valorAntecipado", "juros", "taxa"].includes(key)) {
+                    // Converte value para string e remove 'R$', 'r$', espaços e substitui vírgula por ponto
+                    const sanitizedValue = value.toString().replace(/R\$|r\$|\s/g, "").replace(/\.(?!\d)/g, "").replace(",", ".");
+                    value = Number(sanitizedValue);
                   }
-                  
+
                   // Converter campos de data de número para data
-                  if (['dataDeAntecipacao', 'vencimentoOriginal', 'previsaoDePagamento'].includes(camelCaseKey)) {
-                    const excelDate = new Date(1899, 12, value - 1); 
+                  if (["dataDeAntecipacao", "vencimentoOriginal", "previsaoDePagamento", "data antecipação/reprova da fatura", "data aceite proposta", "data solicitação", "data vencimento fatura"].includes(key)) {
+                    const excelDate = new Date(1899, 12, value - 1);
                     const year = excelDate.getFullYear();
                     const month = excelDate.getMonth() + 1;
                     const day = excelDate.getDate();
-                    value = `${year}-${month.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+                    value = `${year}-${month.toString().padStart(2, "0")}-${day.toString().padStart(2, "0")}`;
                   }
 
                   // Converter campos específicos para string
-                  if (['nDocumento'].includes(camelCaseKey)) {                                        
+                  if (["nDocumento", "cnpj fornecedor", "cnpj agente financeiro", "taxa operação", "número nf", "valor do desembolso da antecipação"].includes(key)) {
                     value = value.toString();
                   }
-                  
-
                 }
-                obj[camelCaseKey] = value;
+                obj[originalHeader[index]] = value;
               });
 
               // Se todas as colunas tiverem valor, incluir o objeto no JSON
