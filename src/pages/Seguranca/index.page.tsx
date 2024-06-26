@@ -28,6 +28,11 @@ export default function Seguranca({ children }: SecurityProps) {
               </LinkOptions>
             </Options> */}
             <Options>
+              <LinkOptions onClick={() => Router.push("/Seguranca/EmpresasAutorizadas")} className={pathname === '/Seguranca/EmpresasAutorizadas' ? 'active' : ''}>
+                <span>Empresas Autorizadas</span>
+              </LinkOptions>
+            </Options>
+            <Options>
               <LinkOptions onClick={() => Router.push("/Seguranca/Usuarios")} className={pathname === '/Seguranca/Usuarios' ? 'active' : ''}>
                 <span>Usuários</span>
               </LinkOptions>
