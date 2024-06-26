@@ -602,7 +602,7 @@ export default function Pagamentos(props: EnhancedTableProps) {
                   originalHeader[index] = "dataDeAntecipacao";
                 } else if (key === "data vencimento fatura") {
                   originalHeader[index] = "vencimentoOriginal";
-                } else if (key === "valor bruto fatura") {
+                } else if (key === "valor liquido fatura") {
                   originalHeader[index] = "valorOriginal";
                 } else if (key === "observação") {
                   originalHeader[index] = "obs";
