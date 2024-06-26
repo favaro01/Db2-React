@@ -514,12 +514,14 @@ export default function Pagamentos(props: EnhancedTableProps) {
             'número nf',
             'data vencimento fatura', 
             'data emissão fatura',
-            'valor bruto fatura',
+            'valor liquido fatura',
             'data antecipação/reprova da fatura',
             'observação',            
           ];
   
           const isHeaderCompatible = expectedHeader.every(header => originalHeader?.includes(header));
+
+          console.log(isHeaderCompatible)
   
           if (!isHeaderCompatible) {       
             errors.push({ message: `O cabeçalho do arquivo não é compatível com o esperado.` });          
